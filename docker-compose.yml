@@ -1,0 +1,101 @@
+# ═══════════════════════════════════════════════════════════
+# APIS v5.0 — Docker Compose (Local Development)
+# PostgreSQL + PostGIS, Redis, Backend, Celery Worker, Dashboard
+# ═══════════════════════════════════════════════════════════
+
+version: '3.9'
+
+services:
+  # ── PostgreSQL + PostGIS ──────────────────────────────
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: apis_db
+    environment:
+      POSTGRES_USER: apis
+      POSTGRES_PASSWORD: apis_secret
+      POSTGRES_DB: apis_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apis -d apis_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Redis ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: apis_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── FastAPI Backend ───────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: apis_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://apis:apis_secret@db:5432/apis_db
+      SYNC_DATABASE_URL: postgresql://apis:apis_secret@db:5432/apis_db
+      REDIS_URL: redis://redis:6379/0
+      DEBUG: "true"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ── Celery Worker ─────────────────────────────────────
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: apis_celery
+    environment:
+      DATABASE_URL: postgresql+asyncpg://apis:apis_secret@db:5432/apis_db
+      SYNC_DATABASE_URL: postgresql://apis:apis_secret@db:5432/apis_db
+      REDIS_URL: redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+
+  # ── Dashboard (Dev) ───────────────────────────────────
+  dashboard:
+    image: node:20-alpine
+    container_name: apis_dashboard
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./dashboard:/app
+      - dashboard_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  dashboard_node_modules:
