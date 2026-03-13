@@ -143,3 +143,78 @@ def verify_repair_production(
         "verdict": verdict,
         "diff_s3": diff_s3,
     }
+
+
+async def loop_closure_verification(
+    pothole_uuid: str,
+    new_image_path: str,
+    before_image_s3: str,
+    pothole_mask: list | None = None,
+    pothole: dict | None = None,
+    citizen_phones: list[str] | None = None,
+) -> dict:
+    """
+    Full loop-closure verification combining AI (SSIM) + Social Audit.
+
+    This is the "harder problem" solution — ensuring repair claims
+    are verified through dual-layer accountability:
+        Layer 1: AI-based SSIM image comparison
+        Layer 2: Citizen Social Audit (WhatsApp polls)
+
+    Args:
+        pothole_uuid: pothole UUID
+        new_image_path: local path to new scan image
+        before_image_s3: S3 key of original detection image
+        pothole_mask: optional YOLO mask polygon
+        pothole: full pothole record (for social audit messaging)
+        citizen_phones: phone numbers for social audit polls
+
+    Returns:
+        {
+            'ai_verification': dict,    # SSIM results
+            'social_audit': dict,       # Social Audit record
+            'loop_closure_verdict': str, # Combined verdict
+        }
+    """
+    # Layer 1: AI verification (SSIM)
+    ai_result = verify_repair_production(
+        pothole_uuid, new_image_path, before_image_s3, pothole_mask
+    )
+
+    # Layer 2: Initiate Social Audit
+    social_audit_record = None
+    if pothole and citizen_phones:
+        try:
+            from app.services.social_audit import initiate_social_audit
+
+            social_audit_record = await initiate_social_audit(
+                pothole=pothole,
+                ai_verdict=ai_result["verdict"],
+                ai_ssim_score=ai_result["ssim"],
+                citizen_phones=citizen_phones,
+            )
+        except Exception as e:
+            logger.error("Social audit initiation failed: %s", e)
+
+    result = {
+        "ai_verification": ai_result,
+        "social_audit": (
+            social_audit_record.to_dict()
+            if social_audit_record
+            else {"status": "not_initiated"}
+        ),
+        "loop_closure_verdict": (
+            social_audit_record.loop_closure_verdict.value
+            if social_audit_record and social_audit_record.loop_closure_verdict
+            else ai_result["verdict"].lower()
+        ),
+    }
+
+    logger.info(
+        "Loop closure %s: ai=%s, social_audit=%s",
+        pothole_uuid,
+        ai_result["verdict"],
+        result["loop_closure_verdict"],
+    )
+
+    return result

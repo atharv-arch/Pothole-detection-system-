@@ -1,6 +1,6 @@
 # ═══════════════════════════════════════════════════════════════
 # APIS v5.0 — Twilio WhatsApp & SMS Service
-# Section 11: Citizen verification polls, escalation alerts
+# Section 11: Social Audit polls, escalation alerts
 # ═══════════════════════════════════════════════════════════════
 
 from __future__ import annotations
@@ -82,21 +82,34 @@ async def send_sms(to_phone: str, message: str) -> str | None:
         return None
 
 
-async def send_repair_verification_poll(
+async def send_social_audit_poll(
     pothole: dict, user_phone: str
 ) -> str | None:
     """
-    Send a WhatsApp poll asking citizens to verify repair status.
+    Send a Social Audit verification poll via WhatsApp.
+
+    Framed as an official government Social Audit — not a casual
+    poll. This creates a double-layer accountability mechanism:
+    AI verification + citizen ground-truth confirmation.
     """
-    msg_body = (
-        f"Namaskar! A pothole was reported near KM {pothole.get('km_marker', 'N/A')} "
-        f"on {pothole.get('highway_id', 'NH-30')} and a government complaint was filed. "
-        f"If you recently drove this route, please tell us:\n\n"
-        f"Is the road repaired at this location now?\n"
-        f"Reply: *1* = Yes, fully fixed\n"
-        f"       *2* = No, still damaged\n"
-        f"       *3* = Not sure / didn't notice\n\n"
-        f"Your response directly triggers government escalation if ignored. "
-        f"Thank you. | APIS System | Ref: {pothole.get('uuid', 'N/A')}"
-    )
+    from app.services.social_audit import generate_social_audit_message
+
+    msg_body = generate_social_audit_message(pothole)
     return await send_whatsapp(user_phone, msg_body)
+
+
+async def send_escalation_alert(
+    pothole: dict, tier: int, days_elapsed: int
+) -> str | None:
+    """Send an escalation alert via WhatsApp."""
+    msg_body = (
+        f"⚠️ APIS Escalation Alert — Tier {tier}\n\n"
+        f"Pothole on {pothole.get('highway_id', 'NH-30')} "
+        f"KM {pothole.get('km_marker', 'N/A')} has NOT been repaired "
+        f"after {days_elapsed} days despite complaints.\n\n"
+        f"Escalated to {'NHAI Regional Office' if tier == 2 else 'NHAI HQ + RTI'}.\n"
+        f"Ref: {pothole.get('uuid', 'N/A')}"
+    )
+    return await send_whatsapp(
+        settings.SYSTEM_PHONE or "", msg_body
+    )

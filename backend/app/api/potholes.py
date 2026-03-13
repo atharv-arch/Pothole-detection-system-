@@ -296,3 +296,52 @@ async def get_pothole_images(uuid: str, db: AsyncSession = Depends(get_db)):
 
 # Need to import datetime for timeline
 from datetime import datetime
+
+
+@router.get("/{uuid}/work-order")
+async def get_work_order(uuid: str, db: AsyncSession = Depends(get_db)):
+    """
+    Generate a Standardized Repair Work Order for a pothole.
+
+    Returns actionable data: material BoQ, cost estimate,
+    repair method per IRC/CPWD standards, and contractor instructions.
+    """
+    from app.services.work_order import generate_work_order, generate_work_order_pdf
+
+    result = await db.execute(
+        text("""
+            SELECT *, ST_Y(gps::geometry) as lat, ST_X(gps::geometry) as lon
+            FROM potholes WHERE uuid = :uuid
+        """),
+        {"uuid": uuid},
+    )
+    row = result.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Pothole not found")
+
+    pothole = dict(row._mapping)
+
+    # Fetch highway segment data
+    road_result = await db.execute(
+        text("""
+            SELECT * FROM highway_segments
+            WHERE highway_id = :hid
+              AND km_start <= :km AND km_end >= :km
+            LIMIT 1
+        """),
+        {"hid": pothole.get("highway_id"), "km": pothole.get("km_marker", 0)},
+    )
+    road_row = road_result.fetchone()
+    road = dict(road_row._mapping) if road_row else {
+        "highway_id": pothole.get("highway_id", "NH-30"),
+        "district": pothole.get("district", "Raipur"),
+    }
+
+    work_order = generate_work_order(pothole, road)
+
+    # Generate PDF (async, non-blocking)
+    pdf_path = generate_work_order_pdf(work_order)
+    if pdf_path:
+        work_order["pdf_url"] = pdf_path
+
+    return work_order

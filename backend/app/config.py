@@ -23,6 +23,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
+        extra="ignore"
     )
 
     # ── Database (required) ───────────────────────────────────
@@ -45,9 +46,10 @@ class Settings(BaseSettings):
     # ── Google Gemini AI ──────────────────────────────────────
     GEMINI_API_KEY: Optional[str] = None
 
-    # ── PG Portal ─────────────────────────────────────────────
-    PGPORTAL_USER: Optional[str] = None
-    PGPORTAL_PASS: Optional[str] = None
+    # ── CPGRAMS API (Official Grievance Portal API) ────────────
+    CPGRAMS_API_BASE_URL: str = "https://api.cpgrams.gov.in"
+    CPGRAMS_CLIENT_ID: Optional[str] = None
+    CPGRAMS_CLIENT_SECRET: Optional[str] = None
 
     # ── Twilio (WhatsApp + SMS) ───────────────────────────────
     TWILIO_ACCOUNT_SID: Optional[str] = None
@@ -75,8 +77,10 @@ class Settings(BaseSettings):
     SYSTEM_EMAIL_PASS: Optional[str] = None
     SYSTEM_PHONE: Optional[str] = None
 
-    # ── CAPTCHA solver ────────────────────────────────────────
-    TWO_CAPTCHA_API_KEY: Optional[str] = None
+    # ── Data Sovereignty ──────────────────────────────────────
+    DATA_RESIDENCY_ZONE: str = "nic-sdc-raipur"
+    APPROVED_STORAGE_REGIONS: list[str] = ["ap-south-1", "ap-south-2"]
+    CCTV_DATA_CLASSIFICATION: str = "restricted"
 
     # ── YOLO model path ───────────────────────────────────────
     YOLO_MODEL_PATH: str = "models/yolov8x_nh30_v1.pt"
@@ -99,8 +103,8 @@ class Settings(BaseSettings):
         optional_keys = [
             ("COPERNICUS_USER", "Sentinel satellite downloads"),
             ("GEMINI_API_KEY", "AI complaint letter generation"),
-            ("PGPORTAL_USER", "PG Portal automated filing"),
-            ("TWILIO_ACCOUNT_SID", "WhatsApp/SMS notifications"),
+            ("CPGRAMS_CLIENT_ID", "CPGRAMS API grievance filing"),
+            ("TWILIO_ACCOUNT_SID", "WhatsApp/SMS Social Audit"),
             ("NHAI_ATMS_API_KEY", "NHAI CCTV access"),
             ("MAPBOX_ACCESS_TOKEN", "Dashboard map rendering"),
         ]

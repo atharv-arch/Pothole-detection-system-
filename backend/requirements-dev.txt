@@ -1,0 +1,35 @@
+# ═══════════════════════════════════════════════════════════════
+# APIS v5.0 — Lightweight Dev Dependencies (No Docker Required)
+# Skips heavy ML packages (Torch, GDAL, etc.) for fast startup
+# ═══════════════════════════════════════════════════════════════
+
+# --- Core Framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-multipart==0.0.20
+python-dotenv==1.0.1
+
+# --- Database (SQLite + async) ---
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+
+# --- HTTP ---
+httpx==0.28.1
+requests==2.32.3
+
+# --- AI / LLM ---
+google-generativeai==0.8.4
+
+# --- PDF Generation ---
+reportlab==4.2.5
+
+# --- Twilio (WhatsApp/SMS) ---
+twilio==9.4.4
+
+# --- Utilities ---
+python-json-logger==3.2.1
+sqlparse==0.5.3
+pillow>=10.0
+numpy>=1.26

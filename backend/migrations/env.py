@@ -9,15 +9,22 @@ from alembic import context
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # Use python-dotenv to load environment variables explicitly
+    from dotenv import load_dotenv
+    import os
+    load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"), encoding="utf-8")
+    # Load alembic config explicitly with utf-8 to avoid charmap errors on Windows
+    import configparser
+    fileConfig(config.config_file_name, defaults={'here': os.path.dirname(config.config_file_name)}, disable_existing_loggers=False, encoding='utf-8')
 
 # Import all models so Alembic can see them
 from app.models import Base
 target_metadata = Base.metadata
 
 # Override URL from env if available
-import os
-db_url = os.getenv("SYNC_DATABASE_URL") or os.getenv("DATABASE_URL", "").replace("+asyncpg", "")
+db_url = os.getenv("DATABASE_SYNC_URL") or os.getenv("SYNC_DATABASE_URL")
+if not db_url:
+    db_url = os.getenv("DATABASE_URL", "").replace("+asyncpg", "").replace("+aiosqlite", "")
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)
 

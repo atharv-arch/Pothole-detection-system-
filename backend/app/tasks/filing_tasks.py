@@ -73,9 +73,10 @@ def run_yolo_on_video(self, video_s3_url: str, lat: float, lon: float, device_id
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=60,
                  autoretry_for=(Exception,))
 def file_complaint_task(self, complaint_id: str):
-    """File a complaint on PG Portal with retry logic."""
+    """File a complaint via CPGRAMS API with retry logic."""
+    import asyncio
     from app.database import SyncSessionLocal
-    from app.services.pgportal import file_on_pgportal, fallback_email_complaint
+    from app.services.pgportal import file_via_cpgrams_api, fallback_email_complaint
     from sqlalchemy import text
 
     session = SyncSessionLocal()
@@ -92,18 +93,22 @@ def file_complaint_task(self, complaint_id: str):
         complaint = dict(row._mapping)
 
         try:
-            ref = file_on_pgportal(complaint)
+            # Run async CPGRAMS API call from sync Celery context
+            loop = asyncio.new_event_loop()
+            ref = loop.run_until_complete(file_via_cpgrams_api(complaint))
+            loop.close()
+
             session.execute(
                 text("""
                     UPDATE complaints
                     SET reference_number = :ref, status = 'filed',
-                        filed_at = :now
+                        filed_at = :now, filing_method = 'cpgrams_api'
                     WHERE complaint_id = :cid
                 """),
                 {"ref": ref, "now": datetime.utcnow(), "cid": complaint_id},
             )
             session.commit()
-            logger.info("Complaint %s filed: ref=%s", complaint_id, ref)
+            logger.info("Complaint %s filed via CPGRAMS API: ref=%s", complaint_id, ref)
 
         except Exception as exc:
             if self.request.retries >= self.max_retries:
@@ -112,7 +117,8 @@ def file_complaint_task(self, complaint_id: str):
                 session.execute(
                     text("""
                         UPDATE complaints
-                        SET status = 'filed_via_email', filed_at = :now
+                        SET status = 'filed_via_email', filed_at = :now,
+                            filing_method = 'email_fallback'
                         WHERE complaint_id = :cid
                     """),
                     {"now": datetime.utcnow(), "cid": complaint_id},

@@ -37,3 +37,8 @@ Thumbs.db
 
 # Build
 dashboard/dist/
+
+backend/venv_wsl/
+backend/venv311/
+backend/venv_dev/
+

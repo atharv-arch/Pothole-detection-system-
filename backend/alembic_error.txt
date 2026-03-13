@@ -1,0 +1,141 @@
+﻿.\venv311\Scripts\python.ex
+e : Traceback (most recent 
+call last):
+At line:1 char:34
++ ... ONUTF8="1"; .\venv311
+\Scripts\python.exe -m 
+alembic upgrade head 2>&1 
+...
++                 ~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (Tra  
+  ceback (most recent ca   
+ ll last)::String) [],     
+RemoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+  File "<frozen runpy>", 
+line 198, in 
+_run_module_as_main
+  File "<frozen runpy>", 
+line 88, in _run_code
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\alembic\__main_
+_.py", line 4, in <module>
+    main(prog="alembic")
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\alembic\config.
+py", line 1047, in main
+    CommandLine(prog=prog).
+main(argv=argv)
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\alembic\config.
+py", line 1037, in main
+    self.run_cmd(cfg, 
+options)
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\alembic\config.
+py", line 971, in run_cmd
+    fn(
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\alembic\command
+.py", line 463, in upgrade
+    script = ScriptDirector
+y.from_config(config)
+             ^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\alembic\script\
+base.py", line 169, in 
+from_config
+    script_location = confi
+g.get_alembic_option("scrip
+t_location")
+                      ^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\alembic\config.
+py", line 469, in 
+get_alembic_option
+    if self.file_config.has
+_option(self.config_ini_sec
+tion, name):
+       ^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\sqlalchemy\util
+\langhelpers.py", line 
+1141, in __get__
+    obj.__dict__[self.__nam
+e__] = result = 
+self.fget(obj)
+                           
+                
+^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\alembic\config.
+py", line 254, in 
+file_config
+    compat.read_config_pars
+er(file_config, 
+[self._config_file_path])
+  File "C:\Users\LENOVO\One
+Drive\Desktop\pothole detec
+tion\backend\venv311\Lib\si
+te-packages\alembic\util\co
+mpat.py", line 130, in 
+read_config_parser
+    return file_config.read
+(file_argument, 
+encoding="locale")
+           ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
+  File "C:\Users\LENOVO\App
+Data\Local\Programs\Python\
+Python311\Lib\configparser.
+py", line 712, in read
+    self._read(fp, 
+filename)
+  File "C:\Users\LENOVO\App
+Data\Local\Programs\Python\
+Python311\Lib\configparser.
+py", line 1035, in _read
+    for lineno, line in 
+enumerate(fp, start=1):
+  File "C:\Users\LENOVO\App
+Data\Local\Programs\Python\
+Python311\Lib\encodings\cp1
+252.py", line 23, in decode
+    return codecs.charmap_d
+ecode(input,self.errors,dec
+oding_table)[0]
+           ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
+UnicodeDecodeError: 
+'charmap' codec can't 
+decode byte 0x90 in 
+position 4: character maps 
+to <undefined>
